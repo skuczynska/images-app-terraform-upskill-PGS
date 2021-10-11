@@ -1,0 +1,16 @@
+aws configure
+
+# Initialize the terraform configuration
+terraform init
+
+# Plan the terraform deployment
+terraform plan
+
+# Apply the deployment
+terraform apply
+
+# To get the module from main.tf
+terraform get
+
+# Destroy resources
+terraform destroy
