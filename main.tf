@@ -21,8 +21,8 @@ data "archive_file" "lambda-POST-presignedURL-zip" {
 }
 
 
-resource "aws_iam_role" "skuczynska-lambda-iam" {
-  name               = "skuczynska-lambda-iam"
+resource "aws_iam_role" "skuczynska-lambda-role" {
+  name               = "skuczynska-lambda-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -41,94 +41,129 @@ resource "aws_iam_role" "skuczynska-lambda-iam" {
 EOF
 }
 
+resource "aws_cloudwatch_log_group" "skuczynska-lambda-POST_presignedURL" {
+  name = "/aws/lambda/skuczynska-lambda-POST_presignedURL"
+}
+
+resource "aws_iam_role_policy" "skuczynska-api-gateway-policy" {
+  name = "skuczynska-api-gateway-policy"
+  role = aws_iam_role.skuczynska-lambda-role.id
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "execute-api:Invoke",
+          "execute-api:ManageConnections"
+        ],
+        "Resource" : "arn:aws:execute-api:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "skuczynska-bucket-policy" {
+  name = "skuczynska-bucket-policy"
+  role = aws_iam_role.skuczynska-lambda-role.id
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:*",
+          "s3-object-lambda:*"
+        ],
+        "Resource" : "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "skuczynska-cloudwatch-policy" {
+  name = "skuczynska-cloudwatch-policy"
+  role = aws_iam_role.skuczynska-lambda-role.id
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Action" : [
+          "logs:*"
+        ],
+        "Effect" : "Allow",
+        "Resource" : "*"
+      }
+    ]
+  })
+}
+
 resource "aws_lambda_function" "skuczynska-lambda-POST_presignedURL" {
   filename         = "lambda-POST-presignedURL.zip"
   function_name    = "skuczynska-lambda-POST_presignedURL"
-  role             = aws_iam_role.skuczynska-lambda-iam.arn
+  role             = aws_iam_role.skuczynska-lambda-role.arn
   handler          = "lambda.lambda_handler"
   source_code_hash = data.archive_file.lambda-POST-presignedURL-zip.output_base64sha256
   runtime          = "python3.8"
 }
 
-#data "aws_availability_zones" "azs" {}
+resource "aws_api_gateway_rest_api" "skuczynska-API" {
+  name        = "skuczynska-API"
+  description = "This is my API for images app"
+}
 
-#module "vpc" {
-#  source = "terraform-aws-modules/vpc/aws"
-#
-#  name = "skuczynska-vpc"
-#  cidr = var.vpc_cidr_range
-#
-#  azs = slice(data.aws_availability_zones.azs.names, 0, 2)
-#  public_subnets = var.public_subnets
-#
-#  enable_vpn_gateway = true
-#
-#  # Database subnets
-#  database_subnets = var.database_subnets
-#  database_subnet_group_tags ={
-#    subnet_type = "database"
-#  }
-#
-#  tags = {
-#    Environment = "dev"
-#  }
-#}
-#
-#resource "aws_s3_bucket" "skuczynska-bucket" {
-#  bucket = "skuczynska-bucket"
-#  acl    = "private"
-#
-#  tags = {
-#    Name        = "skuczynska-bucket"
-#    Environment = "dev"
-#  }
-#}
-#
-#resource "aws_iam_group" "skuczynska-bucket_full_access" {
-#  name = "skuczynska-bucket-full-access"
-#}
-#
-#resource "aws_api_gateway_rest_api" "skuczynska-images-API" {
-#  name        = "skuczynska-images-API"
-#  description = "This is my API for an images modyfication app"
-#}
 
-#resource "aws_iam_role" "iam_for_lambda_POST_presigned_URL" {
-#  name = "iam_for_lambda_POST_presigned_URL"
-#
-#  assume_role_policy = <<EOF
-#{
-#  "Version": "2012-10-17",
-#  "Statement": [
-#    {
-#      "Action": "sts:AssumeRole",
-#      "Principal": {
-#        "Service": "lambda.amazonaws.com"
-#      },
-#      "Effect": "Allow",
-#      "Sid": ""
-#    }
-#  ]
-#}
-#EOF
-#}
-#
-#resource "aws_lambda_function" "skuczynska-POST-presigned-URL" {
-#  filename      = "lambda_function_payload.zip"
-#  function_name = "skuczynska-POST-presigned-URL"
-#  role          = aws_iam_role.iam_for_lambda_POST_presigned_URL.arn
-#  handler       = "index.test"
-#
-#  # The filebase64sha256() function is available in Terraform 0.11.12 and later
-#  # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
-#  # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
-#  source_code_hash = filebase64sha256("lambda_function_payload.zip")
-#
-#  runtime = "nodejs12.x"
-#
-#  environment {
-#    variables = {
-#      foo = "bar"
-#    }
-#  }
-#}
+resource "aws_api_gateway_method" "skuczynska-POST-method" {
+  rest_api_id   = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id   = aws_api_gateway_rest_api.skuczynska-API.root_resource_id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_deployment" "skuczynska-deployment" {
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+
+  triggers = {
+    redeployment = sha1(jsonencode(aws_api_gateway_rest_api.skuczynska-API.body))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_integration" "skuczynska-integration" {
+  http_method = aws_api_gateway_method.skuczynska-POST-method.http_method
+  resource_id = aws_api_gateway_rest_api.skuczynska-API.root_resource_id
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.skuczynska-lambda-POST_presignedURL.invoke_arn
+}
+
+# Lambda
+resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.skuczynska-lambda-POST_presignedURL.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.aws_api_gateway_rest_api.skuczynska-API.root_resource_id}"
+}
+
+resource "aws_api_gateway_stage" "Dev" {
+  deployment_id = aws_api_gateway_deployment.skuczynska-deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.skuczynska-API.id
+  stage_name    = "Dev"
+}
+
+resource "aws_s3_bucket" "skuczynska-bucket" {
+  bucket = "skuczynska-bucket"
+  acl    = "public-read"
+
+  tags = {
+    Name        = "skuczynska-bucket"
+    Environment = "Dev"
+  }
+}
+

@@ -5,7 +5,7 @@ from botocore.client import Config
 
 def lambda_handler(event, context):
     s3_client = boto3.client('s3', config=Config(signature_version='s3v4'))
-    bucket_name = 'skuczynska-upskill'
+    bucket_name = 'skuczynska-bucket'
     object_name = 'images'
     data = json.loads(event["body"])
     filename = data["filename"]
