@@ -106,14 +106,14 @@ resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
   principal     = "apigateway.amazonaws.com"
 
   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
+#  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
 }
 
 resource "aws_lambda_function" "skuczynska-lambda-POST_presignedURL" {
   filename         = "lambda-POST-presignedURL.zip"
   function_name    = "skuczynska-lambda-POST_presignedURL"
   role             = aws_iam_role.skuczynska-lambda-role.arn
-  handler          = "lambda.lambda_handler"
+  handler          = "lambda_POST_presignedURL.lambda_handler"
   source_code_hash = data.archive_file.lambda-POST-presignedURL-zip.output_base64sha256
   runtime          = "python3.8"
 }
@@ -135,6 +135,7 @@ resource "aws_api_gateway_method" "skuczynska-POST-method" {
   resource_id   = aws_api_gateway_resource.skuczynska-resource.id
   http_method   = "POST"
   authorization = "NONE"
+  api_key_required = false
 }
 
 resource "aws_api_gateway_integration" "skuczynska-integration" {
@@ -142,7 +143,7 @@ resource "aws_api_gateway_integration" "skuczynska-integration" {
   resource_id = aws_api_gateway_resource.skuczynska-resource.id
   http_method = aws_api_gateway_method.skuczynska-POST-method.http_method
   integration_http_method = "POST"
-  type                    = "AWS"
+  type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.skuczynska-lambda-POST_presignedURL.invoke_arn
 }
 
@@ -158,12 +159,16 @@ resource "aws_api_gateway_deployment" "skuczynska-deployment" {
   lifecycle {
     create_before_destroy = true
   }
+
+   depends_on = [
+    aws_api_gateway_integration.skuczynska-integration
+  ]
 }
 
-resource "aws_api_gateway_stage" "Dev" {
+resource "aws_api_gateway_stage" "dev" {
   deployment_id = aws_api_gateway_deployment.skuczynska-deployment.id
   rest_api_id   = aws_api_gateway_rest_api.skuczynska-API.id
-  stage_name    = "Dev"
+  stage_name    = "dev"
 }
 
 resource "aws_s3_bucket" "skuczynska-bucket" {
@@ -172,7 +177,6 @@ resource "aws_s3_bucket" "skuczynska-bucket" {
 
   tags = {
     Name        = "skuczynska-bucket"
-    Environment = "Dev"
+    Environment = "dev"
   }
 }
-
