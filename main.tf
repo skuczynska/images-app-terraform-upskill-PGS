@@ -98,6 +98,17 @@ resource "aws_iam_role_policy" "skuczynska-cloudwatch-policy" {
   })
 }
 
+# Lambda
+resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.skuczynska-lambda-POST_presignedURL.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
+}
+
 resource "aws_lambda_function" "skuczynska-lambda-POST_presignedURL" {
   filename         = "lambda-POST-presignedURL.zip"
   function_name    = "skuczynska-lambda-POST_presignedURL"
@@ -112,13 +123,30 @@ resource "aws_api_gateway_rest_api" "skuczynska-API" {
   description = "This is my API for images app"
 }
 
+resource "aws_api_gateway_resource" "skuczynska-resource" {
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  parent_id   = aws_api_gateway_rest_api.skuczynska-API.root_resource_id
+  path_part   = "images"
+}
+
 
 resource "aws_api_gateway_method" "skuczynska-POST-method" {
   rest_api_id   = aws_api_gateway_rest_api.skuczynska-API.id
-  resource_id   = aws_api_gateway_rest_api.skuczynska-API.root_resource_id
+  resource_id   = aws_api_gateway_resource.skuczynska-resource.id
   http_method   = "POST"
   authorization = "NONE"
 }
+
+resource "aws_api_gateway_integration" "skuczynska-integration" {
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id = aws_api_gateway_resource.skuczynska-resource.id
+  http_method = aws_api_gateway_method.skuczynska-POST-method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS"
+  uri                     = aws_lambda_function.skuczynska-lambda-POST_presignedURL.invoke_arn
+}
+
+
 
 resource "aws_api_gateway_deployment" "skuczynska-deployment" {
   rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
@@ -130,25 +158,6 @@ resource "aws_api_gateway_deployment" "skuczynska-deployment" {
   lifecycle {
     create_before_destroy = true
   }
-}
-
-resource "aws_api_gateway_integration" "skuczynska-integration" {
-  http_method = aws_api_gateway_method.skuczynska-POST-method.http_method
-  resource_id = aws_api_gateway_rest_api.skuczynska-API.root_resource_id
-  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
-  type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.skuczynska-lambda-POST_presignedURL.invoke_arn
-}
-
-# Lambda
-resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.skuczynska-lambda-POST_presignedURL.function_name
-  principal     = "apigateway.amazonaws.com"
-
-  # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.aws_api_gateway_rest_api.skuczynska-API.root_resource_id}"
 }
 
 resource "aws_api_gateway_stage" "Dev" {
