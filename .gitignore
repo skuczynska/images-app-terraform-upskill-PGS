@@ -36,5 +36,6 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-
-/lambda-POST-presignedURL.zip
+# Lambda
+lambda-POST-presignedURL.zip
+lambda-GET.zip
