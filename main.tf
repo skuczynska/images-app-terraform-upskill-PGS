@@ -211,6 +211,19 @@ resource "aws_api_gateway_integration" "skuczynska-integration-get" {
   uri                     = aws_lambda_function.skuczynska-GET.invoke_arn
 }
 
+resource "aws_api_gateway_method_response" "response_200" {
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id = aws_api_gateway_resource.images.id
+  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration_response" "integration-response-POST" {
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id = aws_api_gateway_resource.images.id
+  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
+  status_code = aws_api_gateway_method_response.response_200.status_code
+}
 
 # Deployment
 resource "aws_api_gateway_deployment" "skuczynska-deployment" {
