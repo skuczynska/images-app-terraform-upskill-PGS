@@ -24,6 +24,11 @@ variable "database_subnets" {
 }
 
 variable "environment" {
-  type = string
+  type    = string
   default = "dev"
+}
+
+variable "bucket_folder_name" {
+  type    = string
+  default = "images/"
 }

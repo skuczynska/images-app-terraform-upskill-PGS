@@ -112,12 +112,17 @@ EOF
 # Bucket
 resource "aws_s3_bucket" "skuczynska-bucket" {
   bucket = "skuczynska-bucket"
-  acl    = "public-read"
+  acl    = "private"
 
   tags = {
     Name        = "skuczynska-bucket"
     Environment = var.environment
   }
+}
+
+resource "aws_s3_bucket_object" "bucket-obj" {
+  bucket = "skuczynska-bucket"
+  key    = "${var.bucket_folder_name}/"
 }
 
 # Lambda
@@ -128,7 +133,7 @@ resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
   principal     = "apigateway.amazonaws.com"
 
   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-#  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
+  #  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
 }
 
 resource "aws_lambda_permission" "skuczynska-lambda-GET-permission" {
@@ -138,7 +143,7 @@ resource "aws_lambda_permission" "skuczynska-lambda-GET-permission" {
   principal     = "apigateway.amazonaws.com"
 
   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-#  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
+  #  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
 }
 
 resource "aws_lambda_function" "skuczynska-lambda-POST_presignedURL" {
@@ -187,6 +192,7 @@ resource "aws_api_gateway_method" "skuczynska-method-POST" {
   api_key_required = false
 }
 
+# Integration
 resource "aws_api_gateway_integration" "skuczynska-integration" {
   rest_api_id             = aws_api_gateway_rest_api.skuczynska-API.id
   resource_id             = aws_api_gateway_resource.images.id
@@ -200,7 +206,7 @@ resource "aws_api_gateway_integration" "skuczynska-integration-get" {
   rest_api_id             = aws_api_gateway_rest_api.skuczynska-API.id
   resource_id             = aws_api_gateway_resource.images.id
   http_method             = aws_api_gateway_method.skuczynska-method-GET.http_method
-  integration_http_method = "GET"
+  integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.skuczynska-GET.invoke_arn
 }
