@@ -28,7 +28,7 @@ resource "aws_sqs_queue" "skuczynska_queue" {
   content_based_deduplication = true
 }
 
-# Cloudwatch groups
+# Cloudwatch group
 resource "aws_cloudwatch_log_group" "skuczynska-lambda-POST_presignedURL" {
   name = "/aws/lambda/skuczynska-lambda-POST_presignedURL"
 }
@@ -124,6 +124,7 @@ resource "aws_iam_role" "skuczynska-lambda-role" {
 EOF
 }
 
+# SNS
 resource "aws_sns_topic" "topic" {
   name = "s3-event-notification-topic"
 
@@ -147,6 +148,7 @@ POLICY
 resource "aws_s3_bucket" "skuczynska-bucket" {
   bucket = "skuczynska-bucket"
   acl    = "private"
+  force_destroy = true
 
   tags = {
     Name        = "skuczynska-bucket"
@@ -227,22 +229,22 @@ resource "aws_api_gateway_integration" "skuczynska-integration" {
 }
 
 
-#resource "aws_api_gateway_method_response" "response_200" {
-#  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
-#  resource_id = aws_api_gateway_resource.images.id
-#  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
-#  status_code = "200"
-#  response_models = {
-#    "application/json" = "Empty"
-#  }
-#}
-#
-#resource "aws_api_gateway_integration_response" "integration-response-POST" {
-#  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
-#  resource_id = aws_api_gateway_resource.images.id
-#  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
-#  status_code = aws_api_gateway_method_response.response_200.status_code
-#}
+resource "aws_api_gateway_method_response" "response_200" {
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id = aws_api_gateway_resource.images.id
+  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
+  status_code = "200"
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "integration-response-POST" {
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id = aws_api_gateway_resource.images.id
+  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
+  status_code = aws_api_gateway_method_response.response_200.status_code
+}
 
 # Deployment
 resource "aws_api_gateway_deployment" "skuczynska-deployment" {
