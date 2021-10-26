@@ -224,7 +224,7 @@ resource "aws_api_gateway_integration" "skuczynska-integration" {
   resource_id             = aws_api_gateway_resource.images.id
   http_method             = aws_api_gateway_method.skuczynska-method-POST.http_method
   integration_http_method = "POST"
-  type                    = "AWS_PROXY"
+  type                    = "HTTP"
   uri                     = aws_lambda_function.skuczynska-lambda-POST_presignedURL.invoke_arn
 }
 

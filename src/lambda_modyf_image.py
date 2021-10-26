@@ -1,11 +1,8 @@
 import boto3
-import os
-import sys
 import uuid
 import json
 from urllib.parse import unquote_plus
 from PIL import Image
-import PIL.Image
 
 s3_client = boto3.client('s3')
 sqs = boto3.client('sqs')

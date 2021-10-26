@@ -5,13 +5,11 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 
-sqs = boto3.client('sqs')
-
 # ToDo: hard-coded url, change that to dynamic
 queue_url = 'https://sqs.eu-central-1.amazonaws.com/890769921003/skuczynska_queue.fifo'
 
-def lambda_handler(event, context):
 
+def lambda_handler(event, context):
     # Generate a presigned URL for the S3 object
     s3_client = boto3.client('s3', config=Config(signature_version='s3v4'))
     bucket_name = 'skuczynska-bucket'
@@ -35,6 +33,7 @@ def lambda_handler(event, context):
 
 
 def send_message_to_sqs(queue_url, filename, mode):
+    sqs = boto3.client('sqs')
     response = sqs.send_message(
         QueueUrl=queue_url,
         DelaySeconds=10,
