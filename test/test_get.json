@@ -1,5 +1,0 @@
-{
-  "headers": {
-    "X-Forwarded-For": "hello-world"
-  }
-}
