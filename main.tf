@@ -178,15 +178,15 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
 
 # Lambda
 resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
+#  statement_id  = "Allowskuczynska-APIInvoke"
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.skuczynska-lambda-POST_presignedURL.function_name
   principal     = "apigateway.amazonaws.com"
 
-  # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-  #  source_arn = "arn:aws:execute-api:${var.region}:${var.account_id}:${aws_api_gateway_rest_api.skuczynska-API.id}/*/${aws_api_gateway_method.skuczynska-POST-method.http_method}${aws_api_gateway_resource.skuczynska-resource.path_part}"
-
-  source_arn = "${aws_api_gateway_rest_api.skuczynska-API.execution_arn}/*/*"
+  # The /*/*/* part allows invocation from any stage, method and resource path
+  # within API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.skuczynska-API.execution_arn}/*/*/*"
 }
 
 resource "aws_lambda_function" "skuczynska-lambda-POST_presignedURL" {
@@ -237,6 +237,7 @@ resource "aws_api_gateway_method_response" "response_200" {
   response_models = {
     "application/json" = "Empty"
   }
+    depends_on = [aws_api_gateway_integration.skuczynska-integration]
 }
 
 resource "aws_api_gateway_integration_response" "integration-response-POST" {
@@ -244,6 +245,8 @@ resource "aws_api_gateway_integration_response" "integration-response-POST" {
   resource_id = aws_api_gateway_resource.images.id
   http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
   status_code = aws_api_gateway_method_response.response_200.status_code
+
+  depends_on = [aws_api_gateway_method_response.response_200]
 }
 
 # Deployment
@@ -269,4 +272,8 @@ resource "aws_api_gateway_stage" "dev" {
 
 output "base_url" {
   value = aws_api_gateway_deployment.skuczynska-deployment.invoke_url
+}
+
+output "lambda_arn" {
+  value = aws_lambda_function.skuczynska-lambda-POST_presignedURL.invoke_arn
 }
