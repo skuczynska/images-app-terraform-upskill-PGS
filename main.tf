@@ -21,6 +21,12 @@ data "archive_file" "lambda-POST-presignedURL-zip" {
   output_path = "lambda-POST-presignedURL.zip"
 }
 
+data "archive_file" "lambda_modyf_image-zip" {
+  type        = "zip"
+  source_file = "src/lambda_modyf_image.py"
+  output_path = "lambda_modyf_image.zip"
+}
+
 # Queue
 resource "aws_sqs_queue" "skuczynska_queue" {
   name                        = "skuczynska_queue.fifo"
