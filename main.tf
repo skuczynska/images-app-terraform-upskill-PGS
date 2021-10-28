@@ -31,12 +31,14 @@ resource "aws_sqs_queue" "skuczynska_queue" {
 # Cloudwatch group
 resource "aws_cloudwatch_log_group" "skuczynska-lambda-POST_presignedURL" {
   name = "/aws/lambda/skuczynska-lambda-POST_presignedURL"
+  depends_on = [aws_lambda_function.skuczynska-lambda-POST_presignedURL]
 }
 
 # Role
 resource "aws_iam_role_policy" "skuczynska-api-gateway-policy" {
   name = "skuczynska-api-gateway-policy"
   role = aws_iam_role.skuczynska-lambda-role.id
+  depends_on = [aws_iam_role.skuczynska-lambda-role]
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -55,6 +57,7 @@ resource "aws_iam_role_policy" "skuczynska-api-gateway-policy" {
 resource "aws_iam_role_policy" "skuczynska-sqs-policy" {
   name = "skuczynska-sqs-policy"
   role = aws_iam_role.skuczynska-lambda-role.id
+  depends_on = [aws_iam_role.skuczynska-lambda-role]
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -72,6 +75,7 @@ resource "aws_iam_role_policy" "skuczynska-sqs-policy" {
 resource "aws_iam_role_policy" "skuczynska-bucket-policy" {
   name = "skuczynska-bucket-policy"
   role = aws_iam_role.skuczynska-lambda-role.id
+  depends_on = [aws_iam_role.skuczynska-lambda-role]
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -90,6 +94,7 @@ resource "aws_iam_role_policy" "skuczynska-bucket-policy" {
 resource "aws_iam_role_policy" "skuczynska-cloudwatch-policy" {
   name = "skuczynska-cloudwatch-policy"
   role = aws_iam_role.skuczynska-lambda-role.id
+  depends_on = [aws_iam_role.skuczynska-lambda-role]
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -146,8 +151,8 @@ POLICY
 
 # Bucket
 resource "aws_s3_bucket" "skuczynska-bucket" {
-  bucket = "skuczynska-bucket"
-  acl    = "private"
+  bucket        = "skuczynska-bucket"
+  acl           = "private"
   force_destroy = true
 
   tags = {
@@ -159,11 +164,13 @@ resource "aws_s3_bucket" "skuczynska-bucket" {
 resource "aws_s3_bucket_object" "bucket-obj" {
   bucket = "skuczynska-bucket"
   key    = "${var.bucket_folder_name}/"
+  depends_on = [aws_s3_bucket.skuczynska-bucket]
 }
 
 resource "aws_s3_bucket_object" "bucket-obj-tmp" {
   bucket = "skuczynska-bucket"
   key    = "${var.bucket_tmp_name}/"
+  depends_on = [aws_s3_bucket.skuczynska-bucket]
 }
 
 resource "aws_s3_bucket_notification" "bucket_notification" {
@@ -178,7 +185,7 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
 
 # Lambda
 resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
-#  statement_id  = "Allowskuczynska-APIInvoke"
+  #  statement_id  = "Allowskuczynska-APIInvoke"
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.skuczynska-lambda-POST_presignedURL.function_name
@@ -196,6 +203,8 @@ resource "aws_lambda_function" "skuczynska-lambda-POST_presignedURL" {
   handler          = "lambda_POST_presignedURL.lambda_handler"
   source_code_hash = data.archive_file.lambda-POST-presignedURL-zip.output_base64sha256
   runtime          = "python3.8"
+
+  depends_on = [aws_iam_role.skuczynska-lambda-role]
 }
 
 # Rest API
@@ -224,8 +233,11 @@ resource "aws_api_gateway_integration" "skuczynska-integration" {
   resource_id             = aws_api_gateway_resource.images.id
   http_method             = aws_api_gateway_method.skuczynska-method-POST.http_method
   integration_http_method = "POST"
-  type                    = "HTTP"
+  type                    = "AWS"
   uri                     = aws_lambda_function.skuczynska-lambda-POST_presignedURL.invoke_arn
+  #  uri                     = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.skuczynska-lambda-POST_presignedURL.arn}/invocations"
+  #  uri                     = "https://${aws_api_gateway_rest_api.skuczynska-API.id}.execute-api.eu-central-1.amazonaws.com/dev/images"
+  #  uri                     = aws_api_gateway_resource.images.path_part
 }
 
 
@@ -237,7 +249,7 @@ resource "aws_api_gateway_method_response" "response_200" {
   response_models = {
     "application/json" = "Empty"
   }
-    depends_on = [aws_api_gateway_integration.skuczynska-integration]
+  depends_on = [aws_api_gateway_integration.skuczynska-integration]
 }
 
 resource "aws_api_gateway_integration_response" "integration-response-POST" {
