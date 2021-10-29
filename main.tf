@@ -237,7 +237,7 @@ resource "aws_lambda_permission" "skuczynska-lambda-modyf-image" {
   function_name = "${aws_lambda_function.skuczynska-modyf-image.arn}"
   principal     = "s3.amazonaws.com"
   source_arn    = "arn:aws:s3:::skuczynska-bucket"
-  filter_prefix = "images/"
+#  filter_prefix = "images/"
 
   depends_on = [aws_lambda_function.skuczynska-modyf-image]
 }
