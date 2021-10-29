@@ -21,10 +21,10 @@ data "archive_file" "lambda-POST-presignedURL-zip" {
   output_path = "lambda-POST-presignedURL.zip"
 }
 
-data "archive_file" "lambda_modyf_image-zip" {
+data "archive_file" "lambda-modyf-image-zip" {
   type        = "zip"
   source_file = "src/lambda_modyf_image.py"
-  output_path = "lambda_modyf_image.zip"
+  output_path = "lambda-modyf-image.zip"
 }
 
 # Queue
@@ -36,16 +36,16 @@ resource "aws_sqs_queue" "skuczynska_queue" {
 
 # Cloudwatch group
 resource "aws_cloudwatch_log_group" "skuczynska-lambda-POST_presignedURL" {
-  name = "/aws/lambda/skuczynska-lambda-POST_presignedURL"
+  name       = "/aws/lambda/skuczynska-lambda-POST_presignedURL"
   depends_on = [aws_lambda_function.skuczynska-lambda-POST_presignedURL]
 }
 
 # Role
 resource "aws_iam_role_policy" "skuczynska-api-gateway-policy" {
-  name = "skuczynska-api-gateway-policy"
-  role = aws_iam_role.skuczynska-lambda-role.id
+  name       = "skuczynska-api-gateway-policy"
+  role       = aws_iam_role.skuczynska-lambda-role.id
   depends_on = [aws_iam_role.skuczynska-lambda-role]
-  policy = jsonencode({
+  policy     = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
@@ -61,10 +61,10 @@ resource "aws_iam_role_policy" "skuczynska-api-gateway-policy" {
 }
 
 resource "aws_iam_role_policy" "skuczynska-sqs-policy" {
-  name = "skuczynska-sqs-policy"
-  role = aws_iam_role.skuczynska-lambda-role.id
+  name       = "skuczynska-sqs-policy"
+  role       = aws_iam_role.skuczynska-lambda-role.id
   depends_on = [aws_iam_role.skuczynska-lambda-role]
-  policy = jsonencode({
+  policy     = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
@@ -79,10 +79,10 @@ resource "aws_iam_role_policy" "skuczynska-sqs-policy" {
 }
 
 resource "aws_iam_role_policy" "skuczynska-bucket-policy" {
-  name = "skuczynska-bucket-policy"
-  role = aws_iam_role.skuczynska-lambda-role.id
+  name       = "skuczynska-bucket-policy"
+  role       = aws_iam_role.skuczynska-lambda-role.id
   depends_on = [aws_iam_role.skuczynska-lambda-role]
-  policy = jsonencode({
+  policy     = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
@@ -98,10 +98,10 @@ resource "aws_iam_role_policy" "skuczynska-bucket-policy" {
 }
 
 resource "aws_iam_role_policy" "skuczynska-cloudwatch-policy" {
-  name = "skuczynska-cloudwatch-policy"
-  role = aws_iam_role.skuczynska-lambda-role.id
+  name       = "skuczynska-cloudwatch-policy"
+  role       = aws_iam_role.skuczynska-lambda-role.id
   depends_on = [aws_iam_role.skuczynska-lambda-role]
-  policy = jsonencode({
+  policy     = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
@@ -168,28 +168,33 @@ resource "aws_s3_bucket" "skuczynska-bucket" {
 }
 
 resource "aws_s3_bucket_object" "bucket-obj" {
-  bucket = "skuczynska-bucket"
-  key    = "${var.bucket_folder_name}/"
+  bucket     = "skuczynska-bucket"
+  key        = "${var.bucket_folder_name}/"
   depends_on = [aws_s3_bucket.skuczynska-bucket]
 }
 
 resource "aws_s3_bucket_object" "bucket-obj-tmp" {
-  bucket = "skuczynska-bucket"
-  key    = "${var.bucket_tmp_name}/"
+  bucket     = "skuczynska-bucket"
+  key        = "${var.bucket_tmp_name}/"
   depends_on = [aws_s3_bucket.skuczynska-bucket]
 }
 
 resource "aws_s3_bucket_notification" "bucket_notification" {
   bucket = aws_s3_bucket.skuczynska-bucket.id
 
-  topic {
-    topic_arn     = aws_sns_topic.topic.arn
-    events        = ["s3:ObjectCreated:*"]
-    filter_suffix = ".log"
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.skuczynska-modyf-image.arn
+    events              = ["s3:ObjectCreated:*"]
   }
+
+#  topic {
+#    topic_arn     = aws_sns_topic.topic.arn
+#    events        = ["s3:ObjectCreated:*"]
+#    filter_suffix = ".log"
+#  }
 }
 
-# Lambda
+# Lambda POST
 resource "aws_lambda_permission" "skuczynska-lambda-POST-permission" {
   #  statement_id  = "Allowskuczynska-APIInvoke"
   statement_id  = "AllowExecutionFromAPIGateway"
@@ -212,6 +217,31 @@ resource "aws_lambda_function" "skuczynska-lambda-POST_presignedURL" {
 
   depends_on = [aws_iam_role.skuczynska-lambda-role]
 }
+
+# Lambda s3 triggered with lambda
+
+resource "aws_lambda_function" "skuczynska-modyf-image" {
+  filename         = "lambda-modyf-image.zip"
+  function_name    = "skuczynska-modyf-image"
+  role             = aws_iam_role.skuczynska-lambda-role.arn
+  handler          = "skuczynska-modyf-image.lambda_handler"
+  source_code_hash = data.archive_file.lambda-modyf-image-zip.output_base64sha256
+  runtime          = "python3.8"
+
+  depends_on = [aws_iam_role.skuczynska-lambda-role]
+}
+
+resource "aws_lambda_permission" "skuczynska-lambda-modyf-image" {
+  statement_id  = "AllowS3Invoke"
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.skuczynska-modyf-image.arn}"
+  principal     = "s3.amazonaws.com"
+  source_arn    = "arn:aws:s3:::skuczynska-bucket"
+  filter_prefix = "images/"
+
+  depends_on = [aws_lambda_function.skuczynska-modyf-image]
+}
+
 
 # Rest API
 resource "aws_api_gateway_rest_api" "skuczynska-API" {
@@ -248,14 +278,14 @@ resource "aws_api_gateway_integration" "skuczynska-integration" {
 
 
 resource "aws_api_gateway_method_response" "response_200" {
-  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
-  resource_id = aws_api_gateway_resource.images.id
-  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
-  status_code = "200"
+  rest_api_id     = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id     = aws_api_gateway_resource.images.id
+  http_method     = aws_api_gateway_method.skuczynska-method-POST.http_method
+  status_code     = "200"
   response_models = {
     "application/json" = "Empty"
   }
-  depends_on = [aws_api_gateway_integration.skuczynska-integration]
+  depends_on      = [aws_api_gateway_integration.skuczynska-integration]
 }
 
 resource "aws_api_gateway_integration_response" "integration-response-POST" {

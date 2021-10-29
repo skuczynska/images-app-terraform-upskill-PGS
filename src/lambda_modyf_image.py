@@ -18,7 +18,9 @@ def resize_image(image_path, resized_path):
 
 def lambda_handler(event, context):
     for record in event['Records']:
+        print(event, context)
         bucket = record['s3']['bucket']['name']
+        print(bucket)
         key = unquote_plus(record['s3']['object']['key'])
         tmpkey = key.replace('/', '')
         download_path = '/tmp/{}{}'.format(uuid.uuid4(), tmpkey)
