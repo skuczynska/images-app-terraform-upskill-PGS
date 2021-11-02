@@ -17,11 +17,11 @@ def lambda_handler(event, context):
     expiration = 3600
     try:
         filename = event["filename"]
-        mode = event["mode"]
+        # mode = event["mode"]
         response = s3_client.generate_presigned_url('put_object',
-                                                    Params={'Bucket': bucket_name,
-                                                            'Key': f'{object_name}/{filename}'},
-                                                    ExpiresIn=expiration)
+                                               Params={'Bucket': bucket_name,
+                                                       'Key': f'{object_name}/{filename}'},
+                                               ExpiresIn=expiration)
 
         # send_message_to_sqs(queue_url, filename, mode)
 
