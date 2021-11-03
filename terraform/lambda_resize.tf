@@ -22,5 +22,5 @@ resource "aws_lambda_permission" "allow_bucket" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.resize.arn
   principal     = "s3.amazonaws.com"
-  source_arn    = "arn:aws:s3:::skuczynska-bucket"
+  source_arn    = aws_s3_bucket.skuczynska-bucket-resized.arn
 }
