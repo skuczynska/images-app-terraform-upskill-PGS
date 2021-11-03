@@ -7,7 +7,7 @@ def lambda_handler(event, context):
 
     # Generate a presigned URL for the S3 object
     s3_client = boto3.client('s3', config=Config(signature_version='s3v4'))
-    bucket_name = 'skuczynska-bucket'
+    bucket_name = 'skuczynska-bucket-resized'
     object_name = 'images'
     expiration = 3600
 
