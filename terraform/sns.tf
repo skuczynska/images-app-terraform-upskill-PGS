@@ -11,7 +11,7 @@ resource "aws_sns_topic" "topic" {
         "Action": "SNS:Publish",
         "Resource": "arn:aws:sns:*:*:s3-event-notification-topic",
         "Condition":{
-            "ArnLike":{"aws:SourceArn":"${aws_s3_bucket.skuczynska-bucket.arn}"}
+            "ArnLike":{"aws:SourceArn":"${aws_s3_bucket.skuczynska-bucket-resized.arn}"}
         }
     }]
 }
