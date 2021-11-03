@@ -1,11 +1,17 @@
 # Bucket
-resource "aws_s3_bucket" "skuczynska-bucket" {
-  bucket        = "skuczynska-bucket"
+resource "aws_s3_bucket" "skuczynska-bucket-resized" {
+  bucket        = "skuczynska-bucket-resized"
   acl           = "private"
   force_destroy = true
+}
 
-  tags = {
-    Name        = "skuczynska-bucket"
-    Environment = var.environment
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket = "skuczynska-bucket-resized"
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.resize.arn
+    events              = ["s3:ObjectCreated:*"]
   }
+
+  depends_on = [aws_lambda_permission.allow_bucket]
 }
