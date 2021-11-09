@@ -20,6 +20,6 @@ POLICY
 
 resource "aws_sns_topic_subscription" "user_updates_sqs" {
   topic_arn = aws_sns_topic.topic.arn
-  protocol  = "sqs"
-  endpoint  = aws_sqs_queue.queue.arn
+  protocol  = var.protocol
+  endpoint  = var.email
 }
