@@ -46,5 +46,5 @@ variable "email" {
 variable "protocol" {
   default     = "email"
   description = "SNS Protocol to use. email or email-json"
-  type        = "string"
+  type        = string
 }

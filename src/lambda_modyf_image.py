@@ -9,6 +9,7 @@ import PIL.Image
 from botocore.client import Config
 
 s3_client = boto3.client('s3', config=Config(signature_version="s3v4"))
+sns_client = boto3.client('sns')
 
 
 def process_image(image_path, resized_path):
@@ -26,9 +27,15 @@ def process_image(image_path, resized_path):
         }
         image.save(resized_path)
         # send a file info message to sqs
-        sqs = boto3.resource('sqs')
         queue = sqs.get_queue_by_name(QueueName='skuczynska-queue')
         response = queue.send_message(MessageBody=json.dumps(img_info))
+
+        # Publish sns message
+        topic_arn = 'arn:aws:sns:eu-central-1:890769921003:s3-event-notification-topic:2fc40def-ab01-4b72-8573-274d9a1aa71b'
+        sqs = boto3.resource('sqs')
+        sns_response = sns_client.publish(Message='Image resized.',
+                                          Subject='Image',
+                                          TopicArn=topic_arn)
 
 
 def lambda_handler(event, context):
