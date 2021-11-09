@@ -21,4 +21,4 @@ def lambda_handler(event, context):
                 "N": str(msg["Width"]),
             },
         }
-        response = client.put_item(TableName='picture', Item=item)
+        response = client.put_item(TableName='skuczynska-images-dynamodb', Item=item)
