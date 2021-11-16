@@ -9,7 +9,7 @@ terraform plan
 # Apply the deployment
 terraform apply
 
-# To get the module from main.tf
+# To get the module from *.tf
 terraform get
 
 # Destroy resources

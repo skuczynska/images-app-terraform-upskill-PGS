@@ -40,7 +40,6 @@ def publish_sns():
         sns_client = boto3.client('sns', region_name='eu-central-1')
 
         created_topic = sns_client.create_topic(Name='sns-topic')
-        print(created_topic)
 
         sns_response = sns_client.publish(Message="Image resized.",
                                           Subject='Image',
