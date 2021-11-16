@@ -1,6 +1,6 @@
 # Images application with terraform and terragrunt
 
-The application allows users to convert images. After sending image user will receive an AWS SNS notyfication.
+The application allows users to convert images. After sending image user will receive an AWS SNS notification.
 
 ## Setup
 Install AWS CLI
