@@ -9,12 +9,11 @@ import PIL.Image
 from botocore.client import Config
 
 s3_client = boto3.client('s3', config=Config(signature_version="s3v4"))
-sns_client = boto3.client('sns')
-
+topic_arn = 'arn:aws:sns:eu-central-1:890769921003:s3-event-notification-topic'
 
 def process_image(image_path, resized_path):
     with Image.open(image_path) as image:
-        # resize image
+        # Resize image
         # image.thumbnail(tuple(x / 2 for x in image.size))
         size = 128, 128
         image.thumbnail(size)
@@ -26,16 +25,30 @@ def process_image(image_path, resized_path):
             "Width": image.width
         }
         image.save(resized_path)
-        # send a file info message to sqs
-        queue = sqs.get_queue_by_name(QueueName='skuczynska-queue')
-        response = queue.send_message(MessageBody=json.dumps(img_info))
 
-        # Publish sns message
-        topic_arn = 'arn:aws:sns:eu-central-1:890769921003:s3-event-notification-topic:2fc40def-ab01-4b72-8573-274d9a1aa71b'
-        sqs = boto3.resource('sqs')
-        sns_response = sns_client.publish(Message='Image resized.',
+        _send_sqs(img_info)
+
+def _send_sqs(img_info):
+    # Send a file info message to sqs
+    sqs = boto3.resource('sqs')
+    queue = sqs.get_queue_by_name(QueueName='skuczynska-queue')
+    response = queue.send_message(MessageBody=json.dumps(img_info))
+
+
+def publish_sns():
+    try:
+        sns_client = boto3.client('sns', region_name='eu-central-1')
+
+        created_topic = sns_client.create_topic(Name='sns-topic')
+        print(created_topic)
+
+        sns_response = sns_client.publish(Message="Image resized.",
                                           Subject='Image',
-                                          TopicArn=topic_arn)
+                                          TopicArn=topic_arn,
+                                          )
+        print(sns_response)
+    except Exception as e:
+        print(e)
 
 
 def lambda_handler(event, context):
@@ -48,3 +61,5 @@ def lambda_handler(event, context):
         s3_client.download_file(bucket, key, download_path)
         process_image(download_path, upload_path)
         s3_client.upload_file(upload_path, bucket, upload_path)
+
+        publish_sns()

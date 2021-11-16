@@ -1,7 +1,7 @@
 # Role
 resource "aws_iam_role" "skuczynska-role-presigned-url" {
-  name                = "skuczynska-role-presigned-url"
-  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  name               = "skuczynska-role-presigned-url"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
@@ -9,18 +9,19 @@ resource "aws_iam_role" "skuczynska-role-presigned-url" {
 }
 
 resource "aws_iam_role" "skuczynska-role-rezise" {
-  name                = "skuczynska-role-rezise"
-  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  name               = "skuczynska-role-rezise"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
     aws_iam_policy.sqs_send_msg.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
+    aws_iam_policy.sns_policy.arn
   ]
 }
 
 resource "aws_iam_role" "role_sqs_to_dynamo" {
-  name                = "skuczynska-role_sqs_to_dynamo"
-  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  name               = "skuczynska-role_sqs_to_dynamo"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.dynamodb_put_item.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
@@ -28,11 +29,30 @@ resource "aws_iam_role" "role_sqs_to_dynamo" {
   ]
 }
 
-# Resource
+# Policies
+resource "aws_iam_policy" "sns_policy" {
+  name        = "skuczynska-sns-policy"
+  description = "A policy to use with lambda function"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "sns:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
 resource "aws_iam_policy" "dynamodb_put_item" {
-  name   = "skuczynska-dynamodb-put-item"
+  name = "skuczynska-dynamodb-put-item"
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Action   = ["dynamodb:PutItem"]
@@ -61,7 +81,6 @@ resource "aws_iam_policy" "sqs_send_msg" {
 EOF
 }
 
-#policies
 resource "aws_iam_policy" "s3_put_object" {
   name        = "skuczynska-s3-policy-put-object"
   description = "A policy to use with lambda function"
@@ -80,6 +99,7 @@ resource "aws_iam_policy" "s3_put_object" {
 }
 EOF
 }
+
 
 # Data
 data "aws_iam_policy" "cloudwatch_full_access" {
@@ -100,3 +120,5 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
 data "aws_iam_policy" "sqs_full_access" {
   arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
 }
+
+

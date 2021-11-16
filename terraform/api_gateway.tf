@@ -16,16 +16,16 @@ resource "aws_api_gateway_method" "skuczynska-method-POST" {
   http_method          = "POST"
   authorization        = "NONE"
   request_validator_id = aws_api_gateway_request_validator.filename_validator.id
-  request_models       = {
+  request_models = {
     "application/json" : aws_api_gateway_model.api_model.name
   }
 }
 
 # Integration
 resource "aws_api_gateway_integration" "skuczynska-integration" {
-  rest_api_id             = aws_api_gateway_rest_api.skuczynska-API.id
-  resource_id             = aws_api_gateway_resource.images.id
-  http_method             = aws_api_gateway_method.skuczynska-method-POST.http_method
+  rest_api_id = aws_api_gateway_rest_api.skuczynska-API.id
+  resource_id = aws_api_gateway_resource.images.id
+  http_method = aws_api_gateway_method.skuczynska-method-POST.http_method
 
   integration_http_method = "POST"
   type                    = "AWS"
