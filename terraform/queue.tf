@@ -1,6 +1,6 @@
 # Queue
 resource "aws_sqs_queue" "queue" {
-  name                      = "skuczynska-queue"
+  name                      = "${var.owner}-queue"
   delay_seconds             = 90
   max_message_size          = 2048
   message_retention_seconds = 86400

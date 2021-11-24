@@ -1,12 +1,12 @@
 # Bucket
-resource "aws_s3_bucket" "skuczynska-bucket-resized" {
-  bucket        = "skuczynska-bucket-resized"
+resource "aws_s3_bucket" "bucket-resized" {
+  bucket        = "${var.owner}-bucket-resized"
   acl           = "public-read"
   force_destroy = true
 }
 
 resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = "skuczynska-bucket-resized"
+  bucket = "${var.owner}-bucket-resized"
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.resize.arn

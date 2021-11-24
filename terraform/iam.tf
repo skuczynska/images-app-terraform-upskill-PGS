@@ -1,6 +1,6 @@
 # Role
-resource "aws_iam_role" "skuczynska-role-presigned-url" {
-  name               = "skuczynska-role-presigned-url"
+resource "aws_iam_role" "role-presigned-url" {
+  name               = "${var.owner}-role-presigned-url"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
@@ -9,7 +9,7 @@ resource "aws_iam_role" "skuczynska-role-presigned-url" {
 }
 
 resource "aws_iam_role" "skuczynska-role-rezise" {
-  name               = "skuczynska-role-rezise"
+  name               = "${var.owner}-role-rezise"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
@@ -20,7 +20,7 @@ resource "aws_iam_role" "skuczynska-role-rezise" {
 }
 
 resource "aws_iam_role" "role_sqs_to_dynamo" {
-  name               = "skuczynska-role_sqs_to_dynamo"
+  name               = "${var.owner}-role_sqs_to_dynamo"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.dynamodb_put_item.arn,
@@ -31,7 +31,7 @@ resource "aws_iam_role" "role_sqs_to_dynamo" {
 
 # Policies
 resource "aws_iam_policy" "sns_policy" {
-  name        = "skuczynska-sns-policy"
+  name        = "${var.owner}-sns-policy"
   description = "A policy to use with lambda function"
   policy      = <<EOF
 {
@@ -50,7 +50,7 @@ EOF
 }
 
 resource "aws_iam_policy" "dynamodb_put_item" {
-  name = "skuczynska-dynamodb-put-item"
+  name = "${var.owner}-dynamodb-put-item"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -64,7 +64,7 @@ resource "aws_iam_policy" "dynamodb_put_item" {
 }
 
 resource "aws_iam_policy" "sqs_send_msg" {
-  name   = "skuczynska-sqs-policy-send-msg"
+  name   = "${var.owner}-sqs-policy-send-msg"
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -82,7 +82,7 @@ EOF
 }
 
 resource "aws_iam_policy" "s3_put_object" {
-  name        = "skuczynska-s3-policy-put-object"
+  name        = "${var.owner}-s3-policy-put-object"
   description = "A policy to use with lambda function"
   policy      = <<EOF
 {
