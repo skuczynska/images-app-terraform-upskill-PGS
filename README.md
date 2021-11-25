@@ -41,24 +41,25 @@ In dir terraform/variables.tf change variable "email" into intended email addres
 
 In the root directory in src/ change the lambda_modyf_image.py module,
 variable topic_arn should contain the AWS SQS arn that is created in AWS.
+Then apply resources again via command "terragrunt apply".
 
-## How to send image
+## How to send an image
 
 After "terragrunt apply" command you will see Outputs in a terminal with base_url.
 Copy that url and pass into the Postman.
-Change request method to POST and put into the body json: filename as a key and value with image's name.
+Change request method to POST and put into the body json: filename as a key and value with an image's name.
 
-Example:
+An example:
 ```
 {
   "filename": "obrazek11.jpg"
 }
 ```
 
-Then you will receive generated url, copy this url.
-Crate new request with this url and select PUT method, add binary file with your image.
-Then you should get an email from AWS Notification.
-You could accept that subscription id you want to receive notifications.
+Then you will receive a generated url, copy this url.
+Crate new request with this url and select a PUT method, add a binary file with your image.
+Then you should get an email from the AWS Notification.
+You could accept that subscription if you want to receive notifications.
 
 ## Helpful terragrunt commands
 Destroy all resources
