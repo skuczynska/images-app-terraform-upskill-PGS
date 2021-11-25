@@ -40,3 +40,5 @@ terraform.rc
 /terraformlambda-POST-presignedURL.zip
 /terraform/lambda-GET.zip
 /terraform/lambda_modyf_image.zip
+/terragrunt/non-prod/.terragrunt-cache/
+/terragrunt/prod/.terragrunt-cache/
