@@ -15,10 +15,18 @@ https://terragrunt.gruntwork.io/docs/getting-started/install/
 
 ## How to run project
 
+Go to the dir with a chosen environment
+```
+cd terragrunt/prod/
+```
+or
+```
+cd terragrunt/non-prod/
+```
+
 Use commands below:
 
 ```
-cd terragrunt
 terragrunt plan
 terragrunt apply
 ```
