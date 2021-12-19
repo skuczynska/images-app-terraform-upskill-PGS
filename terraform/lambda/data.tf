@@ -19,3 +19,14 @@ data "archive_file" "lambda_to_dynamo" {
 data "aws_iam_policy" "cloudwatch_full_access" {
   arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
 }
+
+data "aws_iam_policy_document" "lambda_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}

@@ -19,24 +19,81 @@ resource "aws_lambda_permission" "presigned_url" {
 }
 
 resource "aws_iam_role" "presigned_url" {
-  name               = "${var.owner}-presigned-url"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  name                = "${var.owner}-presigned-url"
+  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
   ]
 }
 
-data "aws_iam_policy_document" "lambda_assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
+resource "aws_lambda_function" "resize" {
+  filename         = "lambda_modyf_image.zip"
+  function_name    = "${var.owner}-lambda-resize"
+  role             = aws_iam_role.rezise.arn
+  handler          = "lambda_modyf_image.lambda_handler"
+  source_code_hash = data.archive_file.lambda-modyf-image-zip.output_base64sha256
 
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-  }
+  layers = [aws_lambda_layer_version.pillow_layer.arn]
+
+  runtime = "python3.8"
 }
+
+resource "aws_iam_role" "role_sqs_to_dynamo" {
+  name               = "${var.owner}-role_sqs_to_dynamo"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  managed_policy_arns = [
+    aws_iam_policy.dynamodb_put_item.arn,
+    data.aws_iam_policy.cloudwatch_full_access.arn,
+    data.aws_iam_policy.sqs_full_access.arn
+  ]
+}
+
+resource "aws_iam_role" "rezise" {
+  name                = "${var.owner}-role-rezise"
+  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  managed_policy_arns = [
+    aws_iam_policy.s3_put_object.arn,
+    aws_iam_policy.sqs_send_msg.arn,
+    data.aws_iam_policy.cloudwatch_full_access.arn,
+    aws_iam_policy.sns_policy.arn
+  ]
+}
+
+resource "aws_lambda_layer_version" "pillow_layer" {
+  filename   = "pillow.zip"
+  layer_name = "${var.owner}-pillow_layer"
+
+  compatible_runtimes = ["python3.8"]
+
+}
+resource "aws_lambda_permission" "allow_bucket" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.resize.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.bucket-resized.arn
+}
+
+resource "aws_iam_policy" "sns_policy" {
+  name        = "${var.owner}-sns-policy"
+  description = "A policy to use with lambda function"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "sns:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
 
 resource "aws_iam_policy" "s3_put_object" {
   name        = "${var.owner}-s3-policy-put-object"
@@ -57,3 +114,53 @@ resource "aws_iam_policy" "s3_put_object" {
 EOF
 }
 
+resource "aws_iam_policy" "dynamodb_put_item" {
+  name   = "${var.owner}-dynamodb-put-item"
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["dynamodb:PutItem"]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_policy" "sqs_send_msg" {
+  name   = "${var.owner}-sqs-policy-send-msg"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "sqs:*"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "s3_put_object" {
+  name        = "${var.owner}-s3-policy-put-object"
+  description = "A policy to use with lambda function"
+  policy      = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:*Object*"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
