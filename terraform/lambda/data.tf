@@ -38,30 +38,35 @@ data "aws_iam_policy_document" "lambda_assume" {
 
 data "aws_iam_policy_document" "s3_put_object" {
   statement {
-    actions = ["s3:*Object*"]
+    actions   = ["s3:*Object*"]
     resources = ["*"]
   }
 }
 
 data "aws_iam_policy_document" "sns" {
   statement {
-    actions = ["sns:*"]
+    actions   = ["sns:*"]
     resources = ["*"]
   }
 }
 
 data "aws_iam_policy_document" "dynamodb_put_item" {
   statement {
-    actions = ["dynamodb:PutItem"]
-    Effect   = "Allow"
+    actions   = ["dynamodb:PutItem"]
+    Effect    = "Allow"
     resources = ["*"]
   }
 }
 
 data "aws_iam_policy_document" "sqs_send_msg" {
   statement {
-    actions = ["sqs:*"]
-    Effect   = "Allow"
+    actions   = ["sqs:*"]
+    Effect    = "Allow"
     resources = ["*"]
   }
 }
+
+data "aws_iam_policy" "sqs_full_access" {
+  arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+}
+
