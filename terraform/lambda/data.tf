@@ -17,8 +17,13 @@ data "archive_file" "to_dynamo" {
 }
 
 data "aws_iam_policy" "cloudwatch_full_access" {
-  arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+  arn = "arn:aws:iam::aws:c/CloudWatchFullAccess"
 }
+
+data "aws_iam_policy" "s3" {
+  arn = "arn:aws:iam::aws:policy/AmazonS3ObjectLambdaExecutionRolePolicy"
+}
+
 
 data "aws_iam_policy_document" "lambda_assume" {
   statement {
