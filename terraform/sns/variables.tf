@@ -1,8 +1,3 @@
-variable "owner" {
-  type = string
-  default = "skuczynska"
-}
-
 variable "email" {
   type    = string
   default = "skuczynska@pgs-soft.com"

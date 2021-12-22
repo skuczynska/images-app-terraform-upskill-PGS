@@ -8,5 +8,5 @@ resource "aws_sqs_queue" "queue" {
 
 resource "aws_lambda_event_source_mapping" "sqs_to_dynamo" {
   event_source_arn = aws_sqs_queue.queue.arn
-  function_name    = aws_lambda_function.sqs_to_dynamo.arn
+  function_name    = var.sqs_to_dynamo_arn
 }

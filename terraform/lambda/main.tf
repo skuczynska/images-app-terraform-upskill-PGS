@@ -15,7 +15,7 @@ resource "aws_lambda_permission" "presigned_url" {
   function_name = aws_lambda_function.presigned_url.function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+  source_arn = var.api_arn
 }
 
 resource "aws_iam_role" "presigned_url" {
@@ -78,7 +78,7 @@ resource "aws_iam_role" "sqs_to_dynamo" {
 
 resource "aws_iam_role" "presigned_url" {
   name               = "${var.owner}-role-presigned-url"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
@@ -98,7 +98,7 @@ resource "aws_lambda_permission" "allow_bucket" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.resize.arn
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.bucket_resized.arn
+  source_arn    = var.bucket_resized_arn
 }
 
 resource "aws_iam_policy" "sns" {
