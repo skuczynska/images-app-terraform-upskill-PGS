@@ -29,7 +29,7 @@ resource "aws_api_gateway_integration" "integration" {
 
   integration_http_method = "POST"
   type                    = "AWS"
-  uri                     = aws_lambda_function.presigned_url.invoke_arn
+  uri                     = var.presigned_url_arn
 }
 
 

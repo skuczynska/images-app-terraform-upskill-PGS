@@ -104,89 +104,22 @@ resource "aws_lambda_permission" "allow_bucket" {
 resource "aws_iam_policy" "sns" {
   name        = "${var.owner}-sns-policy"
   description = "A policy to use with lambda function"
-  policy      = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "sns:*"
-            ],
-            "Effect": "Allow",
-            "Resource": "*"
-        }
-    ]
-}
-EOF
+  policy      = data.aws_iam_policy_document.sns.json
 }
 
 
 resource "aws_iam_policy" "s3_put_object" {
   name        = "${var.owner}-s3-policy-put-object"
   description = "A policy to use with lambda function"
-  policy      = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:*Object*"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
+  policy      = data.aws_iam_policy_document.s3_put_object.json
 }
 
 resource "aws_iam_policy" "dynamodb_put_item" {
   name   = "${var.owner}-dynamodb-put-item"
-  policy = jsonencode({
-    Version   = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["dynamodb:PutItem"]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-    ]
-  })
+  policy = data.aws_iam_policy_document.dynamodb_put_item.json
 }
 
 resource "aws_iam_policy" "sqs_send_msg" {
   name   = "${var.owner}-sqs-policy-send-msg"
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "sqs:*"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_policy" "s3_put_object" {
-  name        = "${var.owner}-s3-policy-put-object"
-  description = "A policy to use with lambda function"
-  policy      = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:*Object*"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
+  policy = data.aws_iam_policy_document.sqs_send_msg.json
 }

@@ -11,6 +11,8 @@ terraform {
 
 module "api" {
   source = "./api"
+
+  presigned_url_arn = module.lambdas.presigned_url_arn
 }
 
 module "bucket" {
