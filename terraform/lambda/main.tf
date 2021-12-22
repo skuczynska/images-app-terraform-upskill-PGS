@@ -20,7 +20,7 @@ resource "aws_lambda_permission" "presigned_url" {
 
 resource "aws_iam_role" "presigned_url" {
   name                = "${var.owner}-presigned-url"
-  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  assume_role_policy  = data.aws_iam_policy_document.lambda_assume.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
@@ -28,20 +28,45 @@ resource "aws_iam_role" "presigned_url" {
 }
 
 resource "aws_lambda_function" "resize" {
-  filename         = "lambda_modyf_image.zip"
+  filename         = "modyf_image.zip"
   function_name    = "${var.owner}-lambda-resize"
-  role             = aws_iam_role.rezise.arn
+  role             = aws_iam_role.resize.arn
   handler          = "lambda_modyf_image.lambda_handler"
-  source_code_hash = data.archive_file.lambda-modyf-image-zip.output_base64sha256
+  source_code_hash = data.archive_file.modyf_image.output_base64sha256
 
   layers = [aws_lambda_layer_version.pillow_layer.arn]
 
   runtime = "python3.8"
 }
 
-resource "aws_iam_role" "role_sqs_to_dynamo" {
-  name               = "${var.owner}-role_sqs_to_dynamo"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
+resource "aws_cloudwatch_log_group" "cloudwatch_group_resize" {
+  name = "/aws/lambda/${var.owner}-lambda-resize"
+}
+
+resource "aws_iam_role" "resize" {
+  name                = "${var.owner}-role-resize"
+  assume_role_policy  = data.aws_iam_policy_document.lambda_assume.json
+  managed_policy_arns = [
+    aws_iam_policy.s3_put_object.arn,
+    aws_iam_policy.sqs_send_msg.arn,
+    data.aws_iam_policy.cloudwatch_full_access.arn,
+    aws_iam_policy.sns.arn
+  ]
+}
+
+resource "aws_lambda_function" "sqs_to_dynamo" {
+  filename         = "to_dynamo.zip"
+  function_name    = "${var.owner}-lambda-to-dynamo-payload"
+  role             = aws_iam_role.sqs_to_dynamo.arn
+  handler          = "lambda_to_dynamo_payload.lambda_handler"
+  source_code_hash = data.archive_file.to_dynamo.output_base64sha256
+
+  runtime = "python3.8"
+}
+
+resource "aws_iam_role" "sqs_to_dynamo" {
+  name               = "${var.owner}-role-sqs-to-dynamo"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
   managed_policy_arns = [
     aws_iam_policy.dynamodb_put_item.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
@@ -49,33 +74,34 @@ resource "aws_iam_role" "role_sqs_to_dynamo" {
   ]
 }
 
-resource "aws_iam_role" "rezise" {
-  name                = "${var.owner}-role-rezise"
-  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role_policy.json
+
+
+resource "aws_iam_role" "presigned_url" {
+  name               = "${var.owner}-role-presigned-url"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.s3_put_object.arn,
-    aws_iam_policy.sqs_send_msg.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
-    aws_iam_policy.sns_policy.arn
   ]
 }
 
 resource "aws_lambda_layer_version" "pillow_layer" {
   filename   = "pillow.zip"
-  layer_name = "${var.owner}-pillow_layer"
+  layer_name = "${var.owner}-pillow-layer"
 
   compatible_runtimes = ["python3.8"]
 
 }
+
 resource "aws_lambda_permission" "allow_bucket" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.resize.arn
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.bucket-resized.arn
+  source_arn    = aws_s3_bucket.bucket_resized.arn
 }
 
-resource "aws_iam_policy" "sns_policy" {
+resource "aws_iam_policy" "sns" {
   name        = "${var.owner}-sns-policy"
   description = "A policy to use with lambda function"
   policy      = <<EOF

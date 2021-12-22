@@ -1,4 +1,3 @@
-# SNS
 resource "aws_sns_topic" "topic" {
   name = "s3-event-notification-topic"
 }

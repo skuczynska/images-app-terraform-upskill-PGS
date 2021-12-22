@@ -1,5 +1,4 @@
-# Bucket
-resource "aws_s3_bucket" "bucket-resized" {
+resource "aws_s3_bucket" "bucket_resized" {
   bucket        = "${var.owner}-bucket-resized"
   acl           = "public-read"
   force_destroy = true

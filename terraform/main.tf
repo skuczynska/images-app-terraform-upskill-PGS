@@ -14,3 +14,30 @@ provider "aws" {
   region  = var.region
 }
 
+module "api" {
+  source = "./api"
+}
+
+module "bucket" {
+  source = "./bucket"
+}
+
+module "dynamodb" {
+  source = "./dynamodb"
+}
+
+module "dynamodb" {
+  source = "./dynamodb"
+}
+
+module "lambdas" {
+  source = "./lambda"
+}
+
+module "queue" {
+  source = "./queue"
+}
+
+module "sns" {
+  source = "./sns"
+}

@@ -1,4 +1,3 @@
-# Queue
 resource "aws_sqs_queue" "queue" {
   name                      = "${var.owner}-queue"
   delay_seconds             = 90
