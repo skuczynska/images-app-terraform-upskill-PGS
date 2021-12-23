@@ -26,10 +26,6 @@ module "dynamodb" {
   source = "./dynamodb"
 }
 
-module "dynamodb" {
-  source = "./dynamodb"
-}
-
 module "lambdas" {
   source = "./lambda"
 

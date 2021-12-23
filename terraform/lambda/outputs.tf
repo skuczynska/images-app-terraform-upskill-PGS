@@ -15,5 +15,5 @@ output "sqs_to_dynamo_arn" {
 }
 
 output "allow_bucket_permission" {
-  value = aws_lambda_permission.allow_bucket
+  value = aws_lambda_permission.allow_bucket.source_arn
 }

@@ -1,5 +1,5 @@
 terraform {
-  source = "../terraform/"
+  source = "${path_relative_from_include()}/../terraform/"
 }
 
 generate "provider" {
@@ -12,3 +12,4 @@ provider "aws" {
 }
 EOF
 }
+

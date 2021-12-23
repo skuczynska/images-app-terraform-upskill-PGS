@@ -15,7 +15,8 @@ resource "aws_lambda_permission" "presigned_url" {
   function_name = aws_lambda_function.presigned_url.function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = var.api_arn
+#  source_arn = var.api_arn
+  source_arn = "arn:aws:api:eu-central-1:890769921003:api:api.execution_arn}/*/*"
 }
 
 resource "aws_iam_role" "presigned_url" {
@@ -65,8 +66,8 @@ resource "aws_lambda_function" "sqs_to_dynamo" {
 }
 
 resource "aws_iam_role" "sqs_to_dynamo" {
-  name               = "${var.owner}-role-sqs-to-dynamo"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+  name                = "${var.owner}-role-sqs-to-dynamo"
+  assume_role_policy  = data.aws_iam_policy_document.lambda_assume.json
   managed_policy_arns = [
     aws_iam_policy.dynamodb_put_item.arn,
     data.aws_iam_policy.cloudwatch_full_access.arn,
@@ -74,16 +75,6 @@ resource "aws_iam_role" "sqs_to_dynamo" {
   ]
 }
 
-
-
-resource "aws_iam_role" "presigned_url" {
-  name               = "${var.owner}-role-presigned-url"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
-  managed_policy_arns = [
-    aws_iam_policy.s3_put_object.arn,
-    data.aws_iam_policy.cloudwatch_full_access.arn,
-  ]
-}
 
 resource "aws_lambda_layer_version" "pillow_layer" {
   filename   = "pillow.zip"

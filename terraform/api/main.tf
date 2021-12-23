@@ -29,7 +29,8 @@ resource "aws_api_gateway_integration" "integration" {
 
   integration_http_method = "POST"
   type                    = "AWS"
-  uri                     = var.presigned_url_arn
+#  uri                     = var.presigned_url_arn
+  uri                     = "arn:aws:lambda:eu-central-1:890769921003:function:skuczynska-presigned-url"
 }
 
 
@@ -53,7 +54,7 @@ resource "aws_api_gateway_integration_response" "integration_response_post" {
 
 resource "aws_api_gateway_model" "api_model" {
   rest_api_id  = aws_api_gateway_rest_api.api.id
-  name         = "${var.owner}-presigned-url-model"
+  name         = "apimodel"
   description  = "a JSON schema"
   content_type = "application/json"
 
