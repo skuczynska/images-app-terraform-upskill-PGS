@@ -1,5 +1,5 @@
 output "presigned_url_arn" {
-  value = aws_lambda_function.presigned_url.arn
+  value = aws_lambda_function.presigned_url.invoke_arn
 }
 
 output "presigned_url_permission" {
@@ -16,4 +16,8 @@ output "sqs_to_dynamo_arn" {
 
 output "allow_bucket_permission" {
   value = aws_lambda_permission.allow_bucket.source_arn
+}
+
+output "base_url" {
+  value = aws_api_gateway_deployment.deployment.invoke_url
 }

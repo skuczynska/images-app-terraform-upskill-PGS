@@ -9,11 +9,6 @@ terraform {
   required_version = ">= 0.14.9"
 }
 
-module "api" {
-  source = "./api"
-
-  presigned_url_arn = module.lambdas.presigned_url_arn
-}
 
 module "bucket" {
   source = "./bucket"
@@ -27,10 +22,9 @@ module "dynamodb" {
 }
 
 module "lambdas" {
-  source = "./lambda"
+  source = "./lambda_api"
 
   bucket_resized_arn = module.bucket.bucket_resized_arn
-  api_arn = module.api.api_arn
 }
 
 module "queue" {
